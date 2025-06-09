@@ -2,7 +2,7 @@
 Laboratorio 2 Robótica
 
 Tema: Sensores, Percepción y Planificación con procesamiento de datos en Robótica Móvil
-
+Link informe: https://docs.google.com/document/d/1gihNBqEV6dat5Yy4Z-VuJ6OuGTm79fGwofphyjieP-A/edit?usp=sharing
 Integrantes:
 
 1. Luciano Alonso Cubillos Bugueño
@@ -223,6 +223,8 @@ Para lograr esto, el sensor envía un pulso ultrasónico y mide el tiempo que ta
 
 Si la distancia está dentro de este rango, el sistema interpreta que hay un obstáculo cercano y lo reporta por el monitor serial. Esta lógica básica permite sentar las bases para futuras decisiones de navegación autónoma, como detenerse, girar o evitar el objeto detectado. Además, la cinta métrica se utiliza en el video como herramienta de validación para comprobar que las mediciones del sensor son consistentes y precisas. 
 **Vídeo:** https://drive.google.com/file/d/1fgnj1V5RRpBAysteTnsBfT1R620tS3kC/view
+No evidenciamos errores de medición mayores. 
+
 
 **-Definir umbrales para detectar colores, rojo, verde y azul usando el sensor RGB**
 **Código:**
@@ -592,7 +594,7 @@ Por lo tanto, el tiempo de respuesta efectivo del robot es de aproximadamente 1 
 
 # Análisis de mejoras generales:
 
-Luego de haber profundizado en las aplicaciones del robot al utilizar ambos sensores estudiados, nos dimos cuenta de problemas que se pudieron observar al avanzar con la actividad. Uno de los problemas era el encontrarse con falsos positivos/negativos, por lo que el ajustar parámetros en la detección de obstáculos con el sensor ultrasónico HC-SR04 fue crucial para poder detectar los obstáculos de manera más ajustada a la inicial. Se espera que para próximas aplicaciones con estos sensores se tomen medidas como el promediado de las lecturas, suavizar las lecturas del sensor RGB TCS34725 con filtros como el tipo media móvil. Con estas mejoras se podría mejorar la robustez del sistema y hacerlo más confiable en otras condiciones de operación.
+Luego de haber profundizado en las aplicaciones del robot al utilizar ambos sensores estudiados, nos dimos cuenta de problemas que se pudieron observar al avanzar con la actividad. Uno de los problemas era el encontrarse con falsos positivos/negativos, por lo que el ajustar parámetros en la detección de obstáculos con el sensor ultrasónico HC-SR04 fue crucial para poder detectar los obstáculos de manera más ajustada a la inicial. Se espera que para próximas aplicaciones con estos sensores se tomen medidas como el promediado de las lecturas, suavizar las lecturas del sensor RGB TCS34725 con filtros como el tipo media móvil. Con estas mejoras se podría mejorar la robustez del sistema y hacerlo más confiable en otras condiciones de operación. 
 
 
 
