@@ -3,6 +3,7 @@ Laboratorio 2 Robótica
 
 Tema: Sensores, Percepción y Planificación con procesamiento de datos en Robótica Móvil
 Link informe: https://docs.google.com/document/d/1gihNBqEV6dat5Yy4Z-VuJ6OuGTm79fGwofphyjieP-A/edit?usp=sharing
+
 Integrantes:
 
 1. Luciano Alonso Cubillos Bugueño
