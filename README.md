@@ -306,18 +306,7 @@ Este método simple pero efectivo demuestra cómo, a través de la comparación 
 **Vídeo:** https://drive.google.com/file/d/1UIbyVI3_FJRf7YfKGJmKwZzWPEKoUTET/view
 
 - Implementar un algoritmo en Arduino que detenga el robot ante obstáculos y cambie de dirección según el color detectado.
-```
 
-```
-- Probar navegación en un circuito con obstáculos y superficies en diferentes colores.
-```
-
-```
-- Ajustar parámetros para mejorar la detección y estabilidad del sistema.
-```
-
-```
-- Implementación de estrategias de navegación basadas en reglas.
 **Código:**
 ```
 // Pines para motor izquierdo
@@ -479,6 +468,67 @@ void loop() {
 
 ```
 
+En el siguiente video se observa la implementación de un algoritmo que integra la detección de obstáculos mediante un sensor ultrasónico (HC-SR04) y la identificación de colores del suelo utilizando el sensor RGB TCS34725. El comportamiento del robot fue programado para realizar distintas acciones dependiendo del color detectado, lo que permite simular un recorrido autónomo guiado por estímulos visuales.
+El circuito parte con el robot sobre una superficie de color negro. Al detectar este color, el robot avanza hasta llegar al siguiente punto. Cuando el sensor RGB identifica el color verde, el robot ejecuta un giro hacia la izquierda y continúa avanzando. Posteriormente, al llegar al color rojo, realiza una vuelta completa (giro a la derecha) y vuelve a avanzar hasta llegar al color azul. En este caso, gira nuevamente a la izquierda y sigue su recorrido hasta encontrar el color blanco, donde finalmente realiza una maniobra de retroceso.
+Este comportamiento es posible gracias a una lógica condicional que actúa cuando el sensor ultrasónico detecta un obstáculo a una distancia igual o menor a 5 cm. En ese momento, el robot se detiene, toma una lectura de color mediante el sensor RGB y ejecuta la acción correspondiente. Todo este proceso puede observarse claramente en el video, donde se valida el funcionamiento del algoritmo diseñado. Más adelante, este tipo de comportamiento será fundamental al integrar sensores y lógica de navegación en conjunto para tareas más complejas.
+
+- Probar navegación en un circuito con obstáculos y superficies en diferentes colores.
+```
+//Se utiliza el mismo código del apartado anterior (Implementar un algoritmo en Arduino que detenga el robot ante obstáculos y cambie de dirección según el color detectado.)
+```
+- Ajustar parámetros para mejorar la detección y estabilidad del sistema.
+
+  Durante la implementación del sistema, fue necesario ajustar diversos parámetros para mejorar tanto la detección de colores como la respuesta del robot frente a obstáculos. Por ejemplo, se modificaron umbrales en el código para que el sensor RGB TCS34725 identificara con mayor precisión los colores rojo, verde, azul, blanco y negro. Estos umbrales se obtuvieron de forma empírica, observando los valores normalizados y ajustándolos hasta lograr una detección confiable en cada caso.
+En cuanto al sensor ultrasónico HC-SR04, también se afinó el umbral de detección de obstáculos (5 cm), lo cual permitió una mejor sincronización entre la lectura de distancia y la posterior acción del robot.
+Por otro lado, se observó que en algunos casos el robot cambiaba bruscamente de dirección o no seguía una trayectoria recta, lo que afectaba su estabilidad durante el recorrido. Esto podría haberse mejorado ajustando y calibrando los motores, ya que pequeñas diferencias en la velocidad de cada motor pueden hacer que el robot se desvíe con el tiempo. Un ajuste más fino en las señales PWM o una compensación entre motores habría permitido una trayectoria más estable y un comportamiento más preciso en cada maniobra.
+Estos ajustes son parte esencial del proceso iterativo de mejora en sistemas robóticos, y serán fundamentales en futuras etapas del proyecto donde se requiera mayor precisión en la navegación y toma de decisiones.
+```
+
+```
+- Implementación de estrategias de navegación basadas en reglas.
+**Código:**
+```
+ if (c < 50) {
+      Serial.println("Negro. Retrocediendo.");
+      avanzar();
+      delay(2000);
+    } else if (fr > 0.3 && fg > 0.35 && fb > 0.25) {
+      Serial.println("Blanco. Avanzando.");
+      retroceder();
+      delay(1000);
+    } else if (fr > 0.5 && fg < 0.35 && fb < 0.3) {
+      Serial.println("Rojo. Girando a la derecha.");
+      girarDerecha();
+      delay(1000);
+      avanzar();
+      delay(3000);
+    } else if (fr < 0.4 && fg > 0.45 && fb < 0.3) {
+      Serial.println("Verde. Girando a la izquierda.");
+      girarIzquierda();
+      delay(1000);
+      avanzar();
+      delay(1000);
+    } else if (fr < 0.3 && fg < 0.4 && fb > 0.45) {
+      Serial.println("Azul. Retrocediendo.");
+      girarIzquierda();
+      delay(1000);
+      avanzar();
+      delay(1000);
+    } else {
+      Serial.println("Color desconocido. Retrocediendo.");
+      retroceder();
+      delay(1000);
+    }
+
+    detener(); // Detenerse después de realizar la acción
+  }
+
+  delay(1000); // Espera antes de volver a medir
+}
+
+
+```
+
 # Preguntas parte 2:
 **-Si el robot detecta el color rojo en el suelo ¿Qué acción debería tomar? ¿Por qué?**
 Respuesta: Si el robot detecta el color rojo en el suelo, debería girar a la derecha. Esto se debe a que en el código se ha implementado una función llamada “girarDerecha()”, la cual se ejecuta específicamente cuando se identifica el color rojo como predominante.
@@ -520,7 +570,7 @@ El tiempo de integración puede ser configurado en el código, esto significa qu
 Por lo tanto, el tiempo de respuesta efectivo del robot es de aproximadamente 1 segundo, ya que es el intervalo con el que se está leyendo el sensor y ejecutando las decisiones asociadas (como girar o detenerse). Este valor puede optimizarse reduciendo el delay() o usando programación basada en temporizadores para permitir una reacción más inmediata del sistema.
 
 #Análisis de mejoras generales:
-
+Luego de haber profundizado en las aplicaciones del robot al utilizar ambos sensores estudiados, nos dimos cuenta de problemas que se pudieron observar al avanzar con la actividad. Uno de los problemas era el encontrarse con falsos positivos/negativos, por lo que el ajustar parámetros en la detección de obstáculos con el sensor ultrasónico HC-SR04 fue crucial para poder detectar los obstáculos de manera más ajustada a la inicial. Se espera que para próximas aplicaciones con estos sensores se tomen medidas como el promediado de las lecturas, suavizar las lecturas del sensor RGB TCS34725 con filtros como el tipo media móvil. Con estas mejoras se podría mejorar la robustez del sistema y hacerlo más confiable en otras condiciones de operación.
 
 
 
