@@ -18,13 +18,13 @@ Integrantes:
 
 ## Solución del laboratorio 2
 
-# Parte 1:
+# Parte 1: Configuración del Hardware y pruebas iniciales 
 - Conectar los sensores ultrasónicos HC-SR04 y RGB en Arduino.
   En esta sección se muestra la conexión individual de los sensores que serán utilizados más adelante en el proyecto.
 Primero, en la siguiente imagen se puede ver el sensor ultrasónico HC-SR04 conectado al Arduino. Este sensor se utiliza para medir distancias mediante pulsos de sonido, y es útil para detectar obstáculos frente al robot.
 ![Imagen 1](images/WhatsApp%20Image%202025-06-08%20at%2022.45.59.jpeg)
 
-Luego, en la siguiente imagen se muestra el sensor de color RGB TCS34725, también conectado al Arduino. Este sensor permite detectar colores predominantes (rojo, verde, azul, blanco o negro) en cualquier superficie circundante al robot (segun la direccion en la que se encuentre orientado el sensor).
+Luego, en la siguiente imagen se muestra el sensor de color RGB TCS34725, también conectado al Arduino. Este sensor permite detectar colores predominantes (rojo, verde, azul, blanco o negro) mediante valores RGB en cualquier superficie circundante al robot (segun la direccion en la que se encuentre orientado el sensor), integrando una luz LED blanca para facilitar su detección.
 ![Imagen 2](images/WhatsApp%20Image%202025-06-08%20at%2022.47.06.jpeg)
 Ambos sensores han sido conectados y probados por separado, pero más adelante serán integrados de manera conjunta para que el robot pueda tomar decisiones combinando información de distancia y color, como parte de su sistema de percepción y navegación.
 
@@ -223,6 +223,8 @@ Para lograr esto, el sensor envía un pulso ultrasónico y mide el tiempo que ta
 
 Si la distancia está dentro de este rango, el sistema interpreta que hay un obstáculo cercano y lo reporta por el monitor serial. Esta lógica básica permite sentar las bases para futuras decisiones de navegación autónoma, como detenerse, girar o evitar el objeto detectado. Además, la cinta métrica se utiliza en el video como herramienta de validación para comprobar que las mediciones del sensor son consistentes y precisas. 
 **Vídeo:** https://drive.google.com/file/d/1fgnj1V5RRpBAysteTnsBfT1R620tS3kC/view
+
+**-Definir umbrales para detectar colores, rojo, verde y azul usando el sensor RGB**
 **Código:**
 ```
 #include <Wire.h>
@@ -287,6 +289,19 @@ Durante la prueba, se utilizaron cinco objetos con superficies de colores defini
 
 Esto es posible gracias al proceso de normalización, que ajusta los valores de rojo, verde y azul en relación a la intensidad total de luz captada, permitiendo una mejor comparación entre colores sin importar las condiciones de iluminación. Además, se utiliza un umbral bajo para reconocer el color negro (muy baja luz reflejada) y combinaciones altas en las tres componentes para identificar el blanco.
 
+Específicamente se utilizaron umbrales definidos como fr, fg y fb (rojo, verde y azul respectivamente)  además de c como la luminosidad de la siguiente manera:
+
+Rojo: fr > 0.5; fg < 0.35; fb < 0.3
+
+Verde:  fr < 0.4; fg > 0.45; fb < 0.3
+
+Azul:  fr < 0.3; fg < 0.4; fb > 0.45
+
+Negro: c < 30 (baja exposición de luz)
+
+Blanco: fr > 0.3; fg > 0.35; fb > 0.25 (todos los colores balanceados)
+
+
 Este método simple pero efectivo demuestra cómo, a través de la comparación de los valores normalizados con umbrales predefinidos, el sistema puede clasificar colores de manera confiable.
 **Vídeo:** https://drive.google.com/file/d/1UIbyVI3_FJRf7YfKGJmKwZzWPEKoUTET/view
 
@@ -303,7 +318,164 @@ Este método simple pero efectivo demuestra cómo, a través de la comparación 
 
 ```
 - Implementación de estrategias de navegación basadas en reglas.
+**Código:**
 ```
+// Pines para motor izquierdo
+const int IN1 = 8; 
+const int IN2 = 9;
+const int ENA = 10;
+
+// Pines para motor derecho
+const int IN3 = 6;
+const int IN4 = 7;
+const int ENB = 5;
+
+// Pines sensor ultrasónico
+const int trigPin = 2;
+const int echoPin = 3;
+
+// Librerías
+#include <Wire.h>
+#include "Adafruit_TCS34725.h"
+
+// Crear instancia del sensor de color
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+
+  // Sensor TCS
+  if (tcs.begin()) {
+    Serial.println("Sensor TCS34725 detectado");
+  } else {
+    Serial.println("No se encontró sensor TCS34725");
+    while (1);
+  }
+}
+
+void avanzar() {
+  analogWrite(ENA, 180);
+  analogWrite(ENB, 180);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+
+void retroceder() {
+  analogWrite(ENA, 120);
+  analogWrite(ENB, 120);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+
+void girarIzquierda() {
+  analogWrite(ENA, 180);
+  analogWrite(ENB, 180);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+
+void girarDerecha() {
+  analogWrite(ENA, 220);
+  analogWrite(ENB, 220);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+
+void detener() {
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+float leerDistancia() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  long duracion = pulseIn(echoPin, HIGH);
+  float distancia = (duracion * 0.0343) / 2;
+  return distancia;
+}
+
+void loop() {
+  float distCentro = leerDistancia();
+
+  if (distCentro <= 5 && distCentro > 0) {
+    detener();
+    delay(1000);
+    // Leer color
+    uint16_t r, g, b, c;
+    tcs.getRawData(&r, &g, &b, &c);
+    if (c == 0) c = 1;
+    float fr = (float)r / c;
+    float fg = (float)g / c;
+    float fb = (float)b / c;
+
+    Serial.print("fr: "); Serial.print(fr, 3);
+    Serial.print(" fg: "); Serial.print(fg, 3);
+    Serial.print(" fb: "); Serial.println(fb, 3);
+
+    if (c < 50) {
+      Serial.println("Negro. Retrocediendo.");
+      avanzar();
+      delay(2000);
+    } else if (fr > 0.3 && fg > 0.35 && fb > 0.25) {
+      Serial.println("Blanco. Avanzando.");
+      retroceder();
+      delay(1000);
+    } else if (fr > 0.5 && fg < 0.35 && fb < 0.3) {
+      Serial.println("Rojo. Girando a la derecha.");
+      girarDerecha();
+      delay(1000);
+      avanzar();
+      delay(3000);
+    } else if (fr < 0.4 && fg > 0.45 && fb < 0.3) {
+      Serial.println("Verde. Girando a la izquierda.");
+      girarIzquierda();
+      delay(1000);
+      avanzar();
+      delay(1000);
+    } else if (fr < 0.3 && fg < 0.4 && fb > 0.45) {
+      Serial.println("Azul. Retrocediendo.");
+      girarIzquierda();
+      delay(1000);
+      avanzar();
+      delay(1000);
+    } else {
+      Serial.println("Color desconocido. Retrocediendo.");
+      retroceder();
+      delay(1000);
+    }
+
+    detener(); // Detenerse después de realizar la acción
+  }
+
+  delay(1000); // Espera antes de volver a medir
+}
+
 
 ```
 
@@ -338,6 +510,16 @@ Respuesta: Una opción sería integrar un sensor LIDAR o una cámara (RGB o RGB-
 -Proporcionar un mapeo más preciso del entorno ya sea 2D o 3D.
 
 -Mejora en la planificación de rutas al poder detectar distintos elementos del entorno como líneas, objetos, señales o realizar seguimiento visual.
+
+**-¿Cuál es el tiempo de respuesta del robot al detectar un cambio de color?**
+
+Respuesta: En este caso, se utiliza el sensor TCS34725, que destaca por su alta precisión en detección de color y por contar con un filtro IR incorporado que mejora la exactitud al eliminar interferencias del espectro infrarrojo. Además, este sensor incluye una fuente de luz LED blanca integrada, lo que le permite operar de forma confiable en diferentes condiciones de iluminación.
+
+El tiempo de integración puede ser configurado en el código, esto significa que el sensor necesita al menos ese tiempo para captar y promediar la cantidad de luz recibida antes de entregar una lectura válida (por ejemplo, 50ms). Sin embargo, en la implementación práctica se agrega un delay(1000) (1 segundo) entre lecturas para asegurar estabilidad en las mediciones y facilitar la observación de resultados.
+
+Por lo tanto, el tiempo de respuesta efectivo del robot es de aproximadamente 1 segundo, ya que es el intervalo con el que se está leyendo el sensor y ejecutando las decisiones asociadas (como girar o detenerse). Este valor puede optimizarse reduciendo el delay() o usando programación basada en temporizadores para permitir una reacción más inmediata del sistema.
+
+#Análisis de mejoras generales:
 
 
 
