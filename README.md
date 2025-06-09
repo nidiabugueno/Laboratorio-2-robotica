@@ -471,7 +471,7 @@ void loop() {
 En el siguiente video se observa la implementación de un algoritmo que integra la detección de obstáculos mediante un sensor ultrasónico (HC-SR04) y la identificación de colores del suelo utilizando el sensor RGB TCS34725. El comportamiento del robot fue programado para realizar distintas acciones dependiendo del color detectado, lo que permite simular un recorrido autónomo guiado por estímulos visuales.
 El circuito parte con el robot sobre una superficie de color negro. Al detectar este color, el robot avanza hasta llegar al siguiente punto. Cuando el sensor RGB identifica el color verde, el robot ejecuta un giro hacia la izquierda y continúa avanzando. Posteriormente, al llegar al color rojo, realiza una vuelta completa (giro a la derecha) y vuelve a avanzar hasta llegar al color azul. En este caso, gira nuevamente a la izquierda y sigue su recorrido hasta encontrar el color blanco, donde finalmente realiza una maniobra de retroceso.
 Este comportamiento es posible gracias a una lógica condicional que actúa cuando el sensor ultrasónico detecta un obstáculo a una distancia igual o menor a 5 cm. En ese momento, el robot se detiene, toma una lectura de color mediante el sensor RGB y ejecuta la acción correspondiente. Todo este proceso puede observarse claramente en el video, donde se valida el funcionamiento del algoritmo diseñado. Más adelante, este tipo de comportamiento será fundamental al integrar sensores y lógica de navegación en conjunto para tareas más complejas.
-
+**Video:** https://drive.google.com/file/d/1xCKT389JeqGP5X-bCwkxL27pw-2nlUJG/view
 - Probar navegación en un circuito con obstáculos y superficies en diferentes colores.
 ```
 //Se utiliza el mismo código del apartado anterior (Implementar un algoritmo en Arduino que detenga el robot ante obstáculos y cambie de dirección según el color detectado.)
@@ -528,6 +528,25 @@ Estos ajustes son parte esencial del proceso iterativo de mejora en sistemas rob
 
 
 ```
+En este apartado se implementaron estrategias de navegación basadas en reglas condicionales, las cuales permiten que el robot tome decisiones específicas según el color detectado en el suelo mediante el sensor RGB TCS34725. Estas reglas están codificadas con una estructura if-else que evalúa el valor de los componentes rojo (fr), verde (fg), azul (fb) y la claridad total (c) para determinar a qué color corresponde la superficie detectada. En base a esto, se ejecuta una acción concreta.
+
+Las decisiones del robot son las siguientes:
+
+-Negro (c < 50): Cuando el sensor detecta poca luz reflejada (muy baja claridad), se interpreta como color negro. En este caso, el robot avanza durante 2 segundos, lo que simula que intenta escapar o corregir su trayectoria si detectó una zona oscura (por ejemplo, un borde o zona no deseada).
+
+-Blanco (fr > 0.3 && fg > 0.35 && fb > 0.25): El blanco refleja todos los colores de forma bastante equilibrada, por lo que los valores normalizados son medios-altos en los tres componentes. Aquí, el robot retrocede brevemente, posiblemente como medida de corrección antes de buscar un nuevo camino.
+
+-Rojo (fr > 0.5 && fg < 0.35 && fb < 0.3): El rojo se caracteriza por una alta componente en rojo y bajos en verde y azul. Al detectarlo, el robot gira a la derecha, espera un segundo y luego avanza durante 3 segundos, lo que representa una maniobra de giro seguida de desplazamiento.
+
+-Verde (fr < 0.4 && fg > 0.45 && fb < 0.3): El verde se detecta cuando su componente es significativamente mayor que las otras. En este caso, el robot gira a la izquierda y luego avanza brevemente.
+
+-Azul (fr < 0.3 && fg < 0.4 && fb > 0.45): Si el valor azul predomina, el robot interpreta que está sobre color azul. Aquí, el robot realiza un giro a la izquierda y luego avanza, como una forma de cambio de dirección.
+
+-Color desconocido: Si los valores no encajan con ninguna de las condiciones anteriores, se considera que el color no es reconocible, por lo tanto, el robot retrocede como medida de seguridad o corrección.
+
+
+Luego de ejecutar cada acción, el robot se detiene y espera un segundo antes de volver a analizar el entorno. Esta lógica de navegación basada en reglas es simple pero efectiva, ya que permite que el robot reaccione ante distintas situaciones del entorno de forma autónoma, sin necesidad de mapas ni planificación previa. Además, estas reglas pueden ser ajustadas fácilmente para adaptar el comportamiento a distintos escenarios.
+
 
 # Preguntas parte 2:
 **-Si el robot detecta el color rojo en el suelo ¿Qué acción debería tomar? ¿Por qué?**
